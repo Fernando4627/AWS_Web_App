@@ -49,7 +49,7 @@ resource "aws_instance" "app_server" {
   }
 }
 resource "aws_s3_bucket" "app_storage" {
-  bucket = "my-terraform-test-bucket"
+  bucket = "Terra1234Bucket1234Test"
 
   tags = {
     Name = "Terra_Test_S3_1"
@@ -64,10 +64,10 @@ resource "aws_resourcegroups_group" "test" {
   resource_query {
     query = <<JSON
 {
-  "TagFilters": [
   "ResourceTypeFilters": [
     "AWS::AllSupported"
   ],
+  "TagFilters": [
     {
       "Key": "Env",
       "Values": ["TestTerraAWS"]
