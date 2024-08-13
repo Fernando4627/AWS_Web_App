@@ -12,24 +12,22 @@ provider "aws" {
   region = "us-east-2"
 }
 
-resource "aws_default_vpc" "app_vpc" {
-  cidr_block = "10.0.0.0/16"
+resource "aws_vpc" "app_vpc" {
+  cidr_block       = "10.0.0.0/16"
+  instance_tenancy = "default"
+
   tags = {
-    Name = "Terra_Test_VPC"
+    Name = "app_vpc"
     Env = "TestTerraAWS"
   }
 }
-import {
-  to = aws_default_vpc.app_vpc
-  id = "vpc-a01106c2"
-}
-resource "aws_subnet" "subnet" {
-  count = 2
-  vpc_id = aws_vpc.app_vpc.id
-  cidr_block = cidrsubnet(aws_vpc.app_vpc.cidr_block, 8, count.index)
-  map_public_ip_on_launch = true
+
+resource "aws_subnet" "app_vpc_subnet" {
+  vpc_id     = aws_vpc.app_vpc.id
+  cidr_block = "10.0.1.0/24"
+
   tags = {
-    Name = "subnet-${count.index}"
+    Name = "app_vpc_subnet"
     Env = "TestTerraAWS"
   }
 }
