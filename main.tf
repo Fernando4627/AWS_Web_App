@@ -13,20 +13,20 @@ provider "aws" {
 }
 
 resource "aws_default_vpc" "app_vpc" {
-    cidr_block = "10.0.0.0/16"
-    enable_dns_support = True
-    enable_dns_hostname = True
+  cidr_block = "10.0.0.0/16"
   tags = {
     Name = "Terra_Test_VPC"
     Env = "TestTerraAWS"
   }
 }
-
+import {
+  to = aws_default_vpc.app_vpc
+  id = "vpc-a01106c2"
+}
 resource "aws_subnet" "subnet" {
   count = 2
   vpc_id = aws_vpc.app_vpc.id
   cidr_block = cidrsubnet(aws_vpc.app_vpc.cidr_block, 8, count.index)
-  availability_zone = element(data.aws_availability_zones.available.names, count.index)
   map_public_ip_on_launch = true
   tags = {
     Name = "subnet-${count.index}"
