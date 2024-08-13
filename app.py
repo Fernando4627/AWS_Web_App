@@ -18,6 +18,7 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_s3_deployment as s3_deployment,
     aws_budgets as budgets,
+    aws_ecr as ecr,
 )
 from constructs import Construct
 
@@ -64,6 +65,13 @@ class ScalableWebAppStack(Stack):
             cluster=cluster,
             task_definition=task_definition,
             public_load_balancer=True,
+        )
+
+        # Create ECR Repository
+        ecr_repo = ecr.Repository(
+            self, "DjangoAppRepository",
+            repository_name="your-django-app-repo",
+            removal_policy=RemovalPolicy.DESTROY  # Optionally delete the repo when the stack is deleted
         )
 
         # Aurora Serverless Database with Auto-Pause
@@ -207,10 +215,9 @@ class ScalableWebAppStack(Stack):
                     },
                     "post_build": {
                         "commands": [
-                            "aws ecr create-repository --repository-name your-django-app --region us-east-1 || true",
-                            "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin your-ecr-repo-uri",
-                            "docker tag your-django-app-image:latest your-ecr-repo-uri:latest",
-                            "docker push your-ecr-repo-uri:latest"
+                            "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin {}".format(ecr_repo.repository_uri),
+                            "docker tag your-django-app-image:latest {}".format(ecr_repo.repository_uri) + ":latest",
+                            "docker push {}".format(ecr_repo.repository_uri) + ":latest"
                         ]
                     }
                 }
@@ -277,12 +284,14 @@ class ScalableWebAppStack(Stack):
         )
 
         # Outputs
+        self.create_output("ECRRepoURI", ecr_repo.repository_uri)
         self.create_output("LoadBalancerDNS", fargate_service.load_balancer.load_balancer_dns_name)
         self.create_output("AmplifyAppURL", main_branch.url)
         self.create_output("PipelineURL", pipeline.pipeline_arn)
 
     def create_output(self, id: str, value: str):
         self.output = core.CfnOutput(self, id, value=value)
+
 
 app = core.App()
 ScalableWebAppStack(app, "ScalableWebAppStack")
