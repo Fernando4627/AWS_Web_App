@@ -12,39 +12,60 @@ provider "aws" {
   region = "us-east-2"
 }
 
+resource "aws_default_vpc" "app_vpc" {
+    cidr_block = "10.0.0.0/16"
+    enable_dns_support = True
+    enable_dns_hostname = True
+  tags = {
+    Name = "Terra_Test_VPC"
+    Env = "TestTerraAWS"
+  }
+}
+
+resource "aws_subnet" "subnet" {
+  count = 2
+  vpc_id = aws_vpc.app_vpc.id
+  cidr_block = cidrsubnet(aws_vpc.app_vpc.cidr_block, 8, count.index)
+  availability_zone = element(data.aws_availability_zones.available.names, count.index)
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "subnet-${count.index}"
+    Env = "TestTerraAWS"
+  }
+}
+
+resource "aws_ecs_cluster" "app_clust" {
+  name = "app-cluster"
+  tags = {
+    Env = "TestTerraAWS"
+  }
+}
+
 resource "aws_instance" "app_server" {
   ami           = var.ubuntu
   instance_type = "t2.micro"
-  count=3
+  count=2
   tags = {
     Name = element(var.ubu_name_list, count.index)
     Env  = "TestTerraAWS"
   }
 }
-resource "aws_instance" "app_server2" {
-  ami           = var.redhat
-  instance_type = "t2.micro"
+resource "aws_s3_bucket" "app_storage" {
+  bucket = "my-tf-test-bucket"
+
   tags = {
-    Name = "redh-1"
+    Name = "Terra_Test_S3_1"
     Env  = "TestTerraAWS"
   }
 }
-resource "aws_instance" "app_server3" {
-  ami           = var.aws_linux
-  instance_type = "t2.micro"
-  tags = {
-    Name = "awsl-1"
-    Env  = "TestTerraAWS"
-  }
-}
+
+
+
 resource "aws_resourcegroups_group" "test" {
   name = "TerraGroupTest"
   resource_query {
     query = <<JSON
 {
-  "ResourceTypeFilters": [
-    "AWS::EC2::Instance"
-  ],
   "TagFilters": [
     {
       "Key": "Env",
