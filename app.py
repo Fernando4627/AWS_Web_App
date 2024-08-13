@@ -163,16 +163,20 @@ class ScalableWebAppStack(Stack):
         )
 
         # AWS Amplify for React Frontend
-        amplify_app = amplify.App(
+        amplify_app = amplify.CfnApp(
             self, "AmplifyApp",
-            source_code_provider=amplify.GitHubSourceCodeProvider(
-                owner="your-github-username",
+            source_code_provider=amplify.CfnApp.SourceCodeProviderProperty(
                 repository="your-repository-name",
-                oauth_token=iam.SecretValue.secrets_manager("github-token")
-            )
+                oauth_token=iam.SecretValue.secrets_manager("github-token").to_string()
+            ),
+            name="AmplifyAppName"
         )
-        main_branch = amplify_app.add_branch("main")
-        amplify_app.add_custom_rule(amplify.CustomRule(source="/<*>", target="/index.html", status=amplify.RedirectStatus.NOT_FOUND))
+
+        amplify_branch = amplify.CfnBranch(
+            self, "AmplifyBranch",
+            app_id=amplify_app.ref,
+            branch_name="main",
+        )
 
         # S3 Bucket for Django Artifacts
         artifact_bucket = s3.Bucket(self, "ArtifactBucket")
@@ -271,7 +275,7 @@ class ScalableWebAppStack(Stack):
 
         # Outputs
         CfnOutput(self, "LoadBalancerDNS", value=fargate_service.load_balancer.load_balancer_dns_name)
-        CfnOutput(self, "AmplifyAppURL", value=main_branch.url)
+        CfnOutput(self, "AmplifyAppURL", value=amplify_branch.attr_branch_url)
         CfnOutput(self, "PipelineURL", value=pipeline.pipeline_arn)
         CfnOutput(self, "ECRRepoURI", value=ecr_repo.repository_uri)
 
