@@ -66,7 +66,7 @@ resource "aws_resourcegroups_group" "test" {
 {
   "TagFilters": [
   "ResourceTypeFilters": [
-    "*"
+    "AWS::AllSupported"
   ],
     {
       "Key": "Env",
