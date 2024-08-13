@@ -1,4 +1,7 @@
 from aws_cdk import (
+    Stack,
+    Duration,
+    RemovalPolicy,
     aws_ec2 as ec2,
     aws_iam as iam,
     aws_ecs as ecs,
@@ -15,12 +18,13 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_s3_deployment as s3_deployment,
     aws_budgets as budgets,
-    core,
 )
+from constructs import Construct
 
-class ScalableWebAppStack(core.Stack):
 
-    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+class ScalableWebAppStack(Stack):
+
+    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         # VPC
@@ -69,7 +73,7 @@ class ScalableWebAppStack(core.Stack):
             vpc=vpc,
             credentials=rds.Credentials.from_generated_secret("dbadmin"),
             scaling=rds.ServerlessScalingOptions(
-                auto_pause=core.Duration.minutes(5),  # Auto-pause after 5 minutes of inactivity
+                auto_pause=Duration.minutes(5),  # Auto-pause after 5 minutes of inactivity
                 min_capacity=rds.AuroraCapacityUnit.ACU_2,
                 max_capacity=rds.AuroraCapacityUnit.ACU_8,
             ),
@@ -80,10 +84,10 @@ class ScalableWebAppStack(core.Stack):
         http_requests_metric = cloudwatch.Metric(
             namespace="AWS/ApplicationELB",
             metric_name="RequestCount",
-            dimensions={
+            dimensions_map={
                 "LoadBalancer": fargate_service.load_balancer.load_balancer_full_name
             },
-            period=core.Duration.minutes(1),
+            period=Duration.minutes(1),
             statistic="Sum"
         )
 
@@ -117,7 +121,7 @@ class ScalableWebAppStack(core.Stack):
                     print("Fargate service stopped:", response)
                 """.format(cluster.cluster_name, fargate_service.service.service_name)
             ),
-            timeout=core.Duration.seconds(60)
+            timeout=Duration.seconds(60)
         )
 
         # Trigger Stop Lambda on Alarm
@@ -142,7 +146,7 @@ class ScalableWebAppStack(core.Stack):
                     print("Fargate service started:", response)
                 """.format(cluster.cluster_name, fargate_service.service.service_name)
             ),
-            timeout=core.Duration.seconds(60)
+            timeout=Duration.seconds(60)
         )
 
         # EventBridge Rule to Trigger Start Lambda on Schedule
@@ -273,14 +277,12 @@ class ScalableWebAppStack(core.Stack):
         )
 
         # Outputs
-        core.CfnOutput(self, "LoadBalancerDNS",
-            value=fargate_service.load_balancer.load_balancer_dns_name)
-        
-        core.CfnOutput(self, "AmplifyAppURL",
-            value=main_branch.url)
+        self.create_output("LoadBalancerDNS", fargate_service.load_balancer.load_balancer_dns_name)
+        self.create_output("AmplifyAppURL", main_branch.url)
+        self.create_output("PipelineURL", pipeline.pipeline_arn)
 
-        core.CfnOutput(self, "PipelineURL",
-            value=pipeline.pipeline_arn)
+    def create_output(self, id: str, value: str):
+        self.output = core.CfnOutput(self, id, value=value)
 
 app = core.App()
 ScalableWebAppStack(app, "ScalableWebAppStack")
