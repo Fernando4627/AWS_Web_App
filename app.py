@@ -165,11 +165,9 @@ class ScalableWebAppStack(Stack):
         # AWS Amplify for React Frontend
         amplify_app = amplify.CfnApp(
             self, "AmplifyApp",
-            source_code_provider=amplify.CfnApp.SourceCodeProviderProperty(
-                repository="your-repository-name",
-                oauth_token=iam.SecretValue.secrets_manager("github-token").to_string()
-            ),
-            name="AmplifyAppName"
+            name="AmplifyAppName",
+            repository="https://github.com/your-github-username/your-repository-name",  # Replace with your GitHub repo URL
+            oauth_token=iam.SecretValue.secrets_manager("github-token").to_string()
         )
 
         amplify_branch = amplify.CfnBranch(
