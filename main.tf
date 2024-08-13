@@ -49,7 +49,7 @@ resource "aws_instance" "app_server" {
   }
 }
 resource "aws_s3_bucket" "app_storage" {
-  bucket = "Terra1234Bucket1234Test"
+  bucket = "terra1234bucket1234-test"
 
   tags = {
     Name = "Terra_Test_S3_1"
