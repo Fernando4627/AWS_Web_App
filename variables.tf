@@ -18,7 +18,7 @@ variable "aws_linux" {
   type        = string
   default     = "ami-05c3dc660cb6907f0"
 }
-variable "ubu_resource_group" {
+variable "ubu_name_list" {
   description = "Name value for each EC2 instance"
   type        = list(any)
   default     = ["ubu-1", "ubu-2", "ubu-3"]
