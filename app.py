@@ -1,24 +1,11 @@
 from aws_cdk import (
-    Stack,
-    Duration,
-    RemovalPolicy,
-    aws_ec2 as ec2,
-    aws_iam as iam,
-    aws_ecs as ecs,
-    aws_ecs_patterns as ecs_patterns,
-    aws_rds as rds,
-    aws_lambda as _lambda,
-    aws_cloudwatch as cloudwatch,
-    aws_events as events,
-    aws_events_targets as targets,
-    aws_amplify as amplify,
-    aws_codepipeline as codepipeline,
-    aws_codepipeline_actions as pipeline_actions,
-    aws_codebuild as codebuild,
-    aws_s3 as s3,
-    aws_s3_deployment as s3_deployment,
-    aws_budgets as budgets,
-    aws_ecr as ecr,
+    App, Stack, Duration, RemovalPolicy, CfnOutput, aws_ec2 as ec2,
+    aws_iam as iam, aws_ecs as ecs, aws_ecs_patterns as ecs_patterns,
+    aws_rds as rds, aws_lambda as _lambda, aws_cloudwatch as cloudwatch,
+    aws_events as events, aws_events_targets as targets, aws_amplify as amplify,
+    aws_codepipeline as codepipeline, aws_codepipeline_actions as pipeline_actions,
+    aws_codebuild as codebuild, aws_s3 as s3, aws_s3_deployment as s3_deployment,
+    aws_budgets as budgets, aws_ecr as ecr
 )
 from constructs import Construct
 
@@ -67,13 +54,6 @@ class ScalableWebAppStack(Stack):
             public_load_balancer=True,
         )
 
-        # Create ECR Repository
-        ecr_repo = ecr.Repository(
-            self, "DjangoAppRepository",
-            repository_name="your-django-app-repo",
-            removal_policy=RemovalPolicy.DESTROY  # Optionally delete the repo when the stack is deleted
-        )
-
         # Aurora Serverless Database with Auto-Pause
         db_cluster = rds.ServerlessCluster(
             self, "AuroraServerless",
@@ -116,18 +96,18 @@ class ScalableWebAppStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_8,
             handler="stop_fargate.handler",
             code=_lambda.Code.from_inline(
-                """
+                f"""
                 import boto3
                 
                 def handler(event, context):
                     ecs_client = boto3.client('ecs')
                     response = ecs_client.update_service(
-                        cluster='{}',  # Replace with your cluster name
-                        service='{}',  # Replace with your service name
+                        cluster='{cluster.cluster_name}',  # Dynamically retrieve cluster name
+                        service='{fargate_service.service.service_name}',  # Dynamically retrieve service name
                         desired_count=0
                     )
                     print("Fargate service stopped:", response)
-                """.format(cluster.cluster_name, fargate_service.service.service_name)
+                """
             ),
             timeout=Duration.seconds(60)
         )
@@ -141,18 +121,18 @@ class ScalableWebAppStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_8,
             handler="start_fargate.handler",
             code=_lambda.Code.from_inline(
-                """
+                f"""
                 import boto3
                 
                 def handler(event, context):
                     ecs_client = boto3.client('ecs')
                     response = ecs_client.update_service(
-                        cluster='{}',  # Replace with your cluster name
-                        service='{}',  # Replace with your service name
+                        cluster='{cluster.cluster_name}',  # Dynamically retrieve cluster name
+                        service='{fargate_service.service.service_name}',  # Dynamically retrieve service name
                         desired_count=1
                     )
                     print("Fargate service started:", response)
-                """.format(cluster.cluster_name, fargate_service.service.service_name)
+                """
             ),
             timeout=Duration.seconds(60)
         )
@@ -176,13 +156,19 @@ class ScalableWebAppStack(Stack):
         )
         start_alarm.add_alarm_action(targets.LambdaFunction(start_fargate_lambda))
 
+        # Create ECR Repository
+        ecr_repo = ecr.Repository(
+            self, "DjangoECRRepo",
+            repository_name="your-django-app"
+        )
+
         # AWS Amplify for React Frontend
         amplify_app = amplify.App(
             self, "AmplifyApp",
             source_code_provider=amplify.GitHubSourceCodeProvider(
                 owner="your-github-username",
                 repository="your-repository-name",
-                oauth_token=core.SecretValue.secrets_manager("github-token")
+                oauth_token=iam.SecretValue.secrets_manager("github-token")
             )
         )
         main_branch = amplify_app.add_branch("main")
@@ -215,9 +201,9 @@ class ScalableWebAppStack(Stack):
                     },
                     "post_build": {
                         "commands": [
-                            "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin {}".format(ecr_repo.repository_uri),
-                            "docker tag your-django-app-image:latest {}".format(ecr_repo.repository_uri) + ":latest",
-                            "docker push {}".format(ecr_repo.repository_uri) + ":latest"
+                            f"$(aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin {ecr_repo.repository_uri})",
+                            f"docker tag your-django-app-image:latest {ecr_repo.repository_uri}:latest",
+                            f"docker push {ecr_repo.repository_uri}:latest"
                         ]
                     }
                 }
@@ -284,15 +270,12 @@ class ScalableWebAppStack(Stack):
         )
 
         # Outputs
-        self.create_output("ECRRepoURI", ecr_repo.repository_uri)
-        self.create_output("LoadBalancerDNS", fargate_service.load_balancer.load_balancer_dns_name)
-        self.create_output("AmplifyAppURL", main_branch.url)
-        self.create_output("PipelineURL", pipeline.pipeline_arn)
-
-    def create_output(self, id: str, value: str):
-        self.output = core.CfnOutput(self, id, value=value)
+        CfnOutput(self, "LoadBalancerDNS", value=fargate_service.load_balancer.load_balancer_dns_name)
+        CfnOutput(self, "AmplifyAppURL", value=main_branch.url)
+        CfnOutput(self, "PipelineURL", value=pipeline.pipeline_arn)
+        CfnOutput(self, "ECRRepoURI", value=ecr_repo.repository_uri)
 
 
-app = core.App()
+app = App()
 ScalableWebAppStack(app, "ScalableWebAppStack")
 app.synth()
