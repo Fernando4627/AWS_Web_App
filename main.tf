@@ -65,6 +65,9 @@ resource "aws_resourcegroups_group" "test" {
     query = <<JSON
 {
   "TagFilters": [
+  "ResourceTypeFilters": [
+    "*"
+  ],
     {
       "Key": "Env",
       "Values": ["TestTerraAWS"]
