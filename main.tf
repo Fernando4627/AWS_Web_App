@@ -49,7 +49,7 @@ resource "aws_instance" "app_server" {
   }
 }
 resource "aws_s3_bucket" "app_storage" {
-  bucket = "my-tf-test-bucket"
+  bucket = "my-terraform-test-bucket"
 
   tags = {
     Name = "Terra_Test_S3_1"
