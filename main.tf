@@ -1,5 +1,7 @@
-data "aws_vpc" "app_vpc" {
-  cidr_block = "172.31.0.0/16"
+resource "aws_vpc" "app_vpc" {
+  cidr_block       = "10.0.0.0/16"
+  instance_tenancy = "default"
+
   tags = {
     Name = "app_vpc"
     Env = "TestTerraAWS"
@@ -9,7 +11,7 @@ data "aws_vpc" "app_vpc" {
 resource "aws_security_group" "allow_http" {
   name        = "allow_http"
   description = "Allow HTTP inbound traffic"
-  vpc_id      = data.aws_vpc.app_vpc.id
+  vpc_id      = aws_vpc.app_vpc.id
 
   ingress {
     description = "HTTP from VPC"
@@ -33,7 +35,7 @@ resource "aws_security_group" "allow_http" {
 }
 
 resource "aws_subnet" "app_vpc_subnet" {
-  vpc_id     = data.aws_vpc.app_vpc.id
+  vpc_id     = aws_vpc.app_vpc.id
   cidr_block = "172.31.1.0/24"
 
   tags = {
