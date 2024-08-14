@@ -4,8 +4,7 @@ resource "aws_vpc" "app_vpc" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "app_vpc"
-    Env = "TestTerraAWS"
+    Name = "app_vpc"   
   }
 }
 
@@ -30,8 +29,7 @@ resource "aws_security_group" "allow_http" {
   }
 
   tags = {
-    Name = "allow_http"
-    Env = "TestTerraAWS"
+    Name = "allow_http"    
   }
 }
 resource "aws_security_group" "allow_ssh" {
@@ -56,7 +54,6 @@ resource "aws_security_group" "allow_ssh" {
 
   tags = {
     Name = "allow_ssh"
-    Env = "TestTerraAWS"
   }
 }
 
@@ -67,15 +64,11 @@ resource "aws_subnet" "app_vpc_subnet" {
 
   tags = {
     Name = "app_vpc_subnet"
-    Env = "TestTerraAWS"
   }
 }
 
 resource "aws_ecs_cluster" "app_clust" {
   name = "app-cluster"
-  tags = {
-    Env = "TestTerraAWS"
-  }
 }
 
 resource "aws_instance" "app_server" {
@@ -84,10 +77,9 @@ resource "aws_instance" "app_server" {
   count=2
   user_data = filebase64("scripts/user_data.sh")
   subnet_id = aws_subnet.app_vpc_subnet.id
-  vpc_security_group_ids= [aws_security_group.allow_http.id]
+  vpc_security_group_ids= [aws_security_group.allow_http.id, aws_security_group.allow_ssh.id]
   tags = {
     Name = element(var.awsl_name_list, count.index)
-    Env  = "TestTerraAWS"
   }
 }
 resource "aws_s3_bucket" "app_storage" {
@@ -95,7 +87,6 @@ resource "aws_s3_bucket" "app_storage" {
 
   tags = {
     Name = "Terra_Test_S3_1"
-    Env  = "TestTerraAWS"
   }
 }
 
