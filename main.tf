@@ -95,13 +95,7 @@ resource "aws_instance" "app_server" {
   ami = var.aws_linux
   instance_type = "t2.micro"
   count=2
-  user_data = <<EOF
-#!/bin/bash
-sudo yum update -y
-sudo yum install -y httpd
-sudo systemctl start httpd.service
-sudo systemctl enable httpd.service
-EOF
+  user_data = file("user_data.sh")
   user_data_replace_on_change = true
   subnet_id = aws_subnet.app_vpc_subnet.id
   vpc_security_group_ids= [aws_security_group.allow_http.id]
