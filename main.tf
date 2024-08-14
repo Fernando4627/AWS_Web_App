@@ -39,7 +39,6 @@ data "ubu_ami" "ubuntu" {
 }
 
 resource "aws_instance" "app_server" {
-  #ami           = data.ubu_ami.ubuntu.id
   ami = var.aws_linux
   instance_type = "t2.micro"
   count=2
