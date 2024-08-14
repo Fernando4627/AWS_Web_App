@@ -36,7 +36,7 @@ resource "aws_security_group" "allow_http" {
 
 resource "aws_subnet" "app_vpc_subnet" {
   vpc_id     = aws_vpc.app_vpc.id
-  cidr_block = "172.31.1.0/24"
+  cidr_block = "10.0.1.0/24"
 
   tags = {
     Name = "app_vpc_subnet"
