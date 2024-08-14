@@ -1,6 +1,7 @@
 resource "aws_vpc" "app_vpc" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
+  enable_dns_hostnames = true
 
   tags = {
     Name = "app_vpc"
@@ -37,6 +38,7 @@ resource "aws_security_group" "allow_http" {
 resource "aws_subnet" "app_vpc_subnet" {
   vpc_id     = aws_vpc.app_vpc.id
   cidr_block = "10.0.1.0/24"
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "app_vpc_subnet"
