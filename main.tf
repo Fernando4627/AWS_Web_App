@@ -84,10 +84,13 @@ resource "aws_route_table" "App_route_table" {
     Name = "App_Gateway"
   }
 }
+resource "aws_route_table_association" "a" {
+  subnet_id      = aws_subnet.app_vpc_subnet.id
+  route_table_id = aws_route_table.App_route_table.id
+}
 resource "aws_ecs_cluster" "app_clust" {
   name = "app-cluster"
 }
-
 resource "aws_instance" "app_server" {
   ami = var.aws_linux
   instance_type = "t2.micro"
