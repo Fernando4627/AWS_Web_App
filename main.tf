@@ -7,7 +7,6 @@ resource "aws_vpc" "app_vpc" {
     Name = "app_vpc"   
   }
 }
-
 resource "aws_security_group" "allow_http" {
   name        = "allow_http"
   description = "Allow HTTP inbound traffic"
@@ -66,7 +65,25 @@ resource "aws_subnet" "app_vpc_subnet" {
     Name = "app_vpc_subnet"
   }
 }
+resource "aws_internet_gateway" "app_gateway" {
+  vpc_id = aws_vpc.app_vpc.id
 
+  tags = {
+    Name = "App_main_gateway"
+  }
+}
+resource "aws_route_table" "App_route_table" {
+  vpc_id = aws_vpc.app_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.app_gateway.id
+  }
+
+  tags = {
+    Name = "App_Gateway"
+  }
+}
 resource "aws_ecs_cluster" "app_clust" {
   name = "app-cluster"
 }
@@ -75,7 +92,7 @@ resource "aws_instance" "app_server" {
   ami = var.aws_linux
   instance_type = "t2.micro"
   count=2
-  user_data = file("${path.module}/scripts/user_data.sh")
+  user_data = file("./scripts/user_data.sh")
   user_data_replace_on_change = true
   subnet_id = aws_subnet.app_vpc_subnet.id
   vpc_security_group_ids= [aws_security_group.allow_http.id]
