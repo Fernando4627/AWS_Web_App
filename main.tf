@@ -1,17 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.16"
-    }
-  }
-  required_version = ">= 1.2.0"
-}
-
-provider "aws" {
-  region = "us-east-2"
-}
-
 resource "aws_vpc" "app_vpc" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
@@ -39,12 +25,27 @@ resource "aws_ecs_cluster" "app_clust" {
   }
 }
 
+data "ubu_ami" "ubuntu" {
+    most_recent = true
+    filter {
+        name = "name"
+        values = ["ubuntu/images/hvm-ssd/ubuntu-noble-24.04-amd64-server-*"]
+    }
+    filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+  owners = ["099720109477"]
+}
+
 resource "aws_instance" "app_server" {
-  ami           = var.ubuntu
+  #ami           = data.ubu_ami.ubuntu.id
+  ami = var.aws_linux
   instance_type = "t2.micro"
   count=2
+  user_data = filebase64("scripts/user_data.sh")
   tags = {
-    Name = element(var.ubu_name_list, count.index)
+    Name = element(var.awsl_name_list, count.index)
     Env  = "TestTerraAWS"
   }
 }
