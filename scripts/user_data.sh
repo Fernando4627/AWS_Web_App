@@ -1,4 +1,4 @@
 sudo yum update -y
-sudo yum install -y httpd.x86_64
+sudo yum install -y httpd
 sudo systemctl start httpd.service
 sudo systemctl enable httpd.service
