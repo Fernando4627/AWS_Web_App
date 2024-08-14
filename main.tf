@@ -47,7 +47,7 @@ resource "aws_subnet" "app_vpc_subnet" {
 resource "aws_network_interface" "app_network" {
   subnet_id   = aws_subnet.app_vpc_subnet.id
   private_ips = ["10.0.1.100","10.0.1.101"]
-
+  vpc_security_group_ids= [aws_security_group.allow_http.id]
   tags = {
     Name = "primary_network_interface"
     Env = "TestTerraAWS"
@@ -71,7 +71,7 @@ resource "aws_instance" "app_server" {
     network_interface_id = aws_network_interface.app_network.id
     device_index         = 0
     }
-  vpc_security_group_ids= [aws_security_group.allow_http.id]
+  
   tags = {
     Name = element(var.awsl_name_list, count.index)
     Env  = "TestTerraAWS"
