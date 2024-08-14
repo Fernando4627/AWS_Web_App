@@ -67,7 +67,10 @@ resource "aws_instance" "app_server" {
   count=2
   user_data = filebase64("scripts/user_data.sh")
   subnet_id = aws_subnet.app_vpc_subnet.id
-  network_interface = aws_network_interface.app_network.id
+  network_interface {
+    network_interface_id = aws_network_interface.app_network.id
+    device_index         = 0
+    }
   vpc_security_group_ids= [aws_security_group.allow_http.id]
   tags = {
     Name = element(var.awsl_name_list, count.index)
