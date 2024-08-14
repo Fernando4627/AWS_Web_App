@@ -66,7 +66,7 @@ resource "aws_instance" "app_server" {
   instance_type = "t2.micro"
   count=2
   user_data = filebase64("scripts/user_data.sh")
-  subnet_id = aws_subnet.app_vpc_subnet.id
+  #subnet_id = aws_subnet.app_vpc_subnet.id
   network_interface {
     network_interface_id = aws_network_interface.app_network.id
     device_index         = 0
