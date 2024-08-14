@@ -56,6 +56,7 @@ resource "aws_instance" "app_server" {
   instance_type = "t2.micro"
   count=2
   user_data = filebase64("scripts/user_data.sh")
+  vpc_security_group_ids= [aws_security_group.allow_http.id]
   tags = {
     Name = element(var.awsl_name_list, count.index)
     Env  = "TestTerraAWS"
