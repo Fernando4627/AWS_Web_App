@@ -98,7 +98,7 @@ resource "aws_instance" "app_server" {
   user_data = file("./scripts/user_data.sh")
   user_data_replace_on_change = true
   subnet_id = aws_subnet.app_vpc_subnet.id
-  vpc_security_group_ids= [aws_security_group.allow_http.id]
+  vpc_security_group_ids= [aws_security_group.allow_http.id, aws_security_group.allow_ssh.id]
   tags = {
     Name = element(var.awsl_name_list, count.index)
   }
@@ -130,5 +130,6 @@ resource "aws_resourcegroups_group" "test" {
 JSON
   }
 }
+
 
 
