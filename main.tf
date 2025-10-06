@@ -94,7 +94,7 @@ resource "aws_ecs_cluster" "app_clust" {
 resource "aws_instance" "app_server" {
   ami = var.aws_linux
   instance_type = "t2.micro"
-  count=3
+  count=1
   user_data = file("./scripts/user_data.sh")
   user_data_replace_on_change = true
   subnet_id = aws_subnet.app_vpc_subnet.id
@@ -130,4 +130,5 @@ resource "aws_resourcegroups_group" "test" {
 JSON
   }
 }
+
 
