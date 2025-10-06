@@ -31,5 +31,6 @@ variable "redh_resource_group" {
 variable "awsl_name_list" {
   description = "Name value for each EC2 instance"
   type        = list(any)
-  default     = ["awsl-1", "awsl-2"]
+  default     = ["awsl-1", "awsl-2", "aws1-3"]
+
 }
